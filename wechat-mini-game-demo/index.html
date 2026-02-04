@@ -3,69 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>饥荒风格生存游戏 Demo</title>
+    <title>🌲 饥荒风格生存游戏 - 高级版 🌲</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            background: #1a1a1a;
-            font-family: Arial, sans-serif;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            font-family: 'Arial', sans-serif;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            color: white;
         }
         
         #game-container {
             position: relative;
-            width: 800px;
-            height: 600px;
-            border: 2px solid #444;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a2e;
         }
         
         #game-canvas {
             display: block;
-            background: #2d2d2d;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
         
         #ui-overlay {
             position: absolute;
             top: 10px;
             left: 10px;
-            color: white;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-bar {
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stat-label {
+            width: 80px;
+            font-weight: bold;
             font-size: 14px;
-            pointer-events: none;
+        }
+        
+        .stat-value {
+            flex: 1;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .stat-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        
+        .hunger-fill { 
+            background: linear-gradient(90deg, #ff9900, #ffcc00);
+            box-shadow: 0 0 10px rgba(255, 153, 0, 0.5);
+        }
+        
+        .health-fill { 
+            background: linear-gradient(90deg, #ff4444, #ff6666);
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+        }
+        
+        .sanity-fill { 
+            background: linear-gradient(90deg, #8844ff, #aa66ff);
+            box-shadow: 0 0 10px rgba(136, 68, 255, 0.5);
+        }
+        
+        .inventory {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .inventory-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        .inventory-count {
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        
+        #game-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: right;
         }
         
         #controls {
             position: absolute;
             bottom: 20px;
             left: 20px;
-            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 12px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        
-        .stat-bar {
-            margin: 5px 0;
-            padding: 5px 10px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 3px;
-        }
-        
-        .hunger-bar { color: #ff6b35; }
-        .health-bar { color: #4CAF50; }
-        .sanity-bar { color: #9C27B0; }
-        
-        .time-display {
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
+            line-height: 1.4;
         }
         
         #start-screen {
@@ -74,67 +140,107 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: radial-gradient(circle, #1a1a2e 0%, #0a0a1a 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 100;
+            z-index: 200;
+            backdrop-filter: blur(5px);
         }
         
         #start-screen h1 {
             color: #ff9900;
-            font-size: 32px;
+            font-size: 48px;
             margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 153, 0, 0.8);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(255, 153, 0, 0.8); }
+            to { text-shadow: 0 0 30px rgba(255, 153, 0, 1); }
         }
         
         #start-btn {
-            padding: 15px 30px;
-            background: #ff9900;
+            padding: 15px 40px;
+            background: linear-gradient(45deg, #ff9900, #ffcc00);
             border: none;
             border-radius: 25px;
             color: white;
             font-size: 18px;
+            font-weight: bold;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(255, 153, 0, 0.4);
         }
         
         #start-btn:hover {
-            transform: scale(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 153, 0, 0.6);
         }
         
-        #resource-display {
+        #message-display {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 5px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px 30px;
+            border-radius: 10px;
             color: white;
-            font-size: 12px;
+            font-size: 16px;
+            z-index: 300;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <canvas id="game-canvas" width="800" height="600"></canvas>
+        <canvas id="game-canvas" width="1200" height="800"></canvas>
         
         <div id="ui-overlay">
-            <div class="stat-bar hunger-bar">饥饿: <span id="hunger-value">100</span></div>
-            <div class="stat-bar health-bar">生命: <span id="health-value">100</span></div>
-            <div class="stat-bar sanity-bar">精神: <span id="sanity-value">100</span></div>
+            <div class="stat-bar">
+                <span class="stat-label">饥饿:</span>
+                <div class="stat-value">
+                    <div class="stat-fill hunger-fill" id="hunger-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="stat-bar">
+                <span class="stat-label">生命:</span>
+                <div class="stat-value">
+                    <div class="stat-fill health-fill" id="health-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="stat-bar">
+                <span class="stat-label">精神:</span>
+                <div class="stat-value">
+                    <div class="stat-fill sanity-fill" id="sanity-bar" style="width: 100%"></div>
+                </div>
+            </div>
             
-            <div class="time-display">
-                <div>天数: <span id="day-count">1</span></div>
-                <div>时间: <span id="time-of-day">白天</span></div>
-                <div>天气: <span id="weather">晴天</span></div>
+            <div class="inventory">
+                <div class="inventory-item">
+                    <span>🌲</span>
+                    <span class="inventory-count" id="wood-count">0</span>
+                </div>
+                <div class="inventory-item">
+                    <span>🪨</span>
+                    <span class="inventory-count" id="stone-count">0</span>
+                </div>
+                <div class="inventory-item">
+                    <span>🍓</span>
+                    <span class="inventory-count" id="food-count">0</span>
+                </div>
             </div>
         </div>
         
-        <div id="resource-display">
-            <div>木材: <span id="wood-count">0</span></div>
-            <div>石头: <span id="stone-count">0</span></div>
-            <div>食物: <span id="food-count">0</span></div>
+        <div id="game-info">
+            <div>第 <span id="day-count">1</span> 天</div>
+            <div id="time-of-day">白天</div>
+            <div id="weather">晴天</div>
         </div>
         
         <div id="controls">
@@ -148,43 +254,55 @@
         
         <div id="start-screen">
             <h1>🌲 生存冒险 🌲</h1>
-            <p style="color: #ccc; margin-bottom: 30px;">收集资源 • 建造家园 • 生存下去</p>
+            <p style="margin-bottom: 30px; font-size: 18px;">收集资源 • 建造家园 • 生存下去</p>
             <button id="start-btn">开始游戏</button>
         </div>
+        
+        <div id="message-display"></div>
     </div>
 
     <script>
-        // 完整的游戏逻辑
-        class SurvivalGame {
+        class AdvancedSurvivalGame {
             constructor() {
                 this.canvas = document.getElementById('game-canvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.gameState = 'menu';
+                this.keys = {};
+                this.lastUpdateTime = 0;
+                this.dayNightCycle = 0;
+                this.messageTimeout = null;
                 
+                // 扩大地图尺寸
+                this.worldWidth = 2000;
+                this.worldHeight = 2000;
+                this.canvas.width = this.worldWidth;
+                this.canvas.height = this.worldHeight;
+                
+                // 玩家初始化
                 this.player = {
-                    x: 400,
-                    y: 300,
-                    width: 30,
-                    height: 50,
+                    x: this.worldWidth / 2,
+                    y: this.worldHeight / 2,
+                    width: 40,
+                    height: 60,
                     hunger: 100,
                     health: 100,
                     sanity: 100,
-                    speed: 4,
-                    inventory: { wood: 0, stone: 0, food: 0 }
+                    speed: 5,
+                    inventory: { wood: 0, stone: 0, food: 0 },
+                    direction: 'down'
                 };
                 
+                // 世界初始化
                 this.world = {
                     dayCount: 1,
                     timeOfDay: 'day',
                     trees: [],
                     stones: [],
+                    berries: [],
                     campfires: [],
-                    workbenches: []
+                    workbenches: [],
+                    grasses: []
                 };
-                
-                this.keys = {};
-                this.lastUpdateTime = 0;
-                this.dayNightCycle = 0;
                 
                 this.init();
             }
@@ -215,26 +333,47 @@
                 this.gameState = 'playing';
                 document.getElementById('start-screen').style.display = 'none';
                 this.lastUpdateTime = performance.now();
+                this.showMessage('游戏开始！收集资源生存下去！');
             }
             
             generateWorld() {
-                // 生成树木
-                for (let i = 0; i < 20; i++) {
+                // 生成树木（更多更好的分布）
+                for (let i = 0; i < 50; i++) {
                     this.world.trees.push({
-                        x: Math.random() * 700 + 50,
-                        y: Math.random() * 500 + 50,
+                        x: Math.random() * this.worldWidth,
+                        y: Math.random() * this.worldHeight,
                         type: 'tree',
-                        size: 40
+                        size: 60 + Math.random() * 20
                     });
                 }
                 
                 // 生成石头
-                for (let i = 0; i < 15; i++) {
+                for (let i = 0; i < 30; i++) {
                     this.world.stones.push({
-                        x: Math.random() * 700 + 50,
-                        y: Math.random() * 500 + 50,
+                        x: Math.random() * this.worldWidth,
+                        y: Math.random() * this.worldHeight,
                         type: 'stone',
-                        size: 30
+                        size: 30 + Math.random() * 10
+                    });
+                }
+                
+                // 生成浆果丛
+                for (let i = 0; i < 40; i++) {
+                    this.world.berries.push({
+                        x: Math.random() * this.worldWidth,
+                        y: Math.random() * this.worldHeight,
+                        type: 'berry',
+                        size: 25 + Math.random() * 5
+                    });
+                }
+                
+                // 生成草地
+                for (let i = 0; i < 200; i++) {
+                    this.world.grasses.push({
+                        x: Math.random() * this.worldWidth,
+                        y: Math.random() * this.worldHeight,
+                        type: 'grass',
+                        size: 5 + Math.random() * 10
                     });
                 }
             }
@@ -245,111 +384,172 @@
                 const deltaTime = (timestamp - this.lastUpdateTime) / 1000;
                 this.lastUpdateTime = timestamp;
                 
-                // 移动控制
-                if (this.keys['w'] || this.keys['arrowup']) this.player.y -= this.player.speed;
-                if (this.keys['s'] || this.keys['arrowdown']) this.player.y += this.player.speed;
-                if (this.keys['a'] || this.keys['arrowleft']) this.player.x -= this.player.speed;
-                if (this.keys['d'] || this.keys['arrowright']) this.player.x += this.player.speed;
-                
-                // 边界检查
-                this.player.x = Math.max(0, Math.min(770, this.player.x));
-                this.player.y = Math.max(0, Math.min(550, this.player.y));
+                // 移动控制（修复卡顿问题）
+                this.updatePlayerMovement(deltaTime);
                 
                 // 状态更新
-                this.player.hunger = Math.max(0, this.player.hunger - deltaTime * 2);
-                if (this.player.hunger < 30) {
-                    this.player.health = Math.max(0, this.player.health - deltaTime * 1);
-                }
+                this.updatePlayerStats(deltaTime);
                 
                 // 昼夜循环
-                this.dayNightCycle += deltaTime;
-                if (this.dayNightCycle > 60) { // 60秒一个周期
-                    this.dayNightCycle = 0;
-                    this.world.timeOfDay = this.world.timeOfDay === 'day' ? 'night' : 'day';
-                    if (this.world.timeOfDay === 'day') {
-                        this.world.dayCount++;
-                    }
-                }
+                this.updateDayNightCycle(deltaTime);
                 
                 // 行动控制
-                if (this.keys[' ']) { // 空格键采集
-                    this.collectResources();
-                    this.keys[' '] = false; // 防止连续触发
-                }
-                
-                if (this.keys['f']) { // F键进食
-                    this.eatFood();
-                    this.keys['f'] = false;
-                }
-                
-                if (this.keys['e']) { // E键建造篝火
-                    this.buildCampfire();
-                    this.keys['e'] = false;
-                }
-                
-                if (this.keys['r']) { // R键建造工作台
-                    this.buildWorkbench();
-                    this.keys['r'] = false;
-                }
+                this.handleActions();
                 
                 this.updateUI();
             }
             
+            updatePlayerMovement(deltaTime) {
+                let moved = false;
+                
+                if (this.keys['w'] || this.keys['arrowup']) {
+                    this.player.y -= this.player.speed;
+                    this.player.direction = 'up';
+                    moved = true;
+                }
+                if (this.keys['s'] || this.keys['arrowdown']) {
+                    this.player.y += this.player.speed;
+                    this.player.direction = 'down';
+                    moved = true;
+                }
+                if (this.keys['a'] || this.keys['arrowleft']) {
+                    this.player.x -= this.player.speed;
+                    this.player.direction = 'left';
+                    moved = true;
+                }
+                if (this.keys['d'] || this.keys['arrowright']) {
+                    this.player.x += this.player.speed;
+                    this.player.direction = 'right';
+                    moved = true;
+                }
+                
+                // 边界检查
+                this.player.x = Math.max(0, Math.min(this.worldWidth - this.player.width, this.player.x));
+                this.player.y = Math.max(0, Math.min(this.worldHeight - this.player.height, this.player.y));
+            }
+            
+            updatePlayerStats(deltaTime) {
+                // 饥饿值随时间减少
+                this.player.hunger = Math.max(0, this.player.hunger - deltaTime * 1.5);
+                
+                // 饥饿值过低时减少生命值
+                if (this.player.hunger < 20) {
+                    this.player.health = Math.max(0, this.player.health - deltaTime * 0.8);
+                }
+                
+                // 生命值过低时减少精神值
+                if (this.player.health < 30) {
+                    this.player.sanity = Math.max(0, this.player.sanity - deltaTime * 0.5);
+                }
+                
+                // 游戏结束检查
+                if (this.player.health <= 0) {
+                    this.gameOver();
+                }
+            }
+            
+            updateDayNightCycle(deltaTime) {
+                this.dayNightCycle += deltaTime;
+                if (this.dayNightCycle > 90) { // 90秒一个周期
+                    this.dayNightCycle = 0;
+                    this.world.timeOfDay = this.world.timeOfDay === 'day' ? 'night' : 'day';
+                    if (this.world.timeOfDay === 'day') {
+                        this.world.dayCount++;
+                        this.showMessage(`第${this.world.dayCount}天开始！`);
+                    }
+                }
+            }
+            
+            handleActions() {
+                // 修复：使用防抖机制防止连续触发
+                if (this.keys[' '] && !this.actionCooldown) {
+                    this.collectResources();
+                    this.actionCooldown = setTimeout(() => {
+                        this.actionCooldown = null;
+                    }, 300);
+                }
+                
+                if (this.keys['f'] && !this.eatCooldown) {
+                    this.eatFood();
+                    this.eatCooldown = setTimeout(() => {
+                        this.eatCooldown = null;
+                    }, 300);
+                }
+                
+                if (this.keys['e'] && !this.buildCooldown) {
+                    this.buildCampfire();
+                    this.buildCooldown = setTimeout(() => {
+                        this.buildCooldown = null;
+                    }, 300);
+                }
+                
+                if (this.keys['r'] && !this.buildCooldown) {
+                    this.buildWorkbench();
+                    this.buildCooldown = setTimeout(() => {
+                        this.buildCooldown = null;
+                    }, 300);
+                }
+            }
+            
             collectResources() {
-                const collectDistance = 60;
+                const collectDistance = 80;
+                let collected = false;
                 
                 // 采集树木
-                const nearbyTree = this.world.trees.find(tree => {
-                    const dx = tree.x - this.player.x;
-                    const dy = tree.y - this.player.y;
-                    return Math.sqrt(dx*dx + dy*dy) < collectDistance;
-                });
-                
+                const nearbyTree = this.findNearbyResource(this.world.trees, collectDistance);
                 if (nearbyTree) {
                     this.world.trees = this.world.trees.filter(tree => tree !== nearbyTree);
                     this.player.inventory.wood += 2;
-                    // 砍树时有几率获得食物（浆果）
-                    if (Math.random() < 0.3) {
+                    // 砍树时有几率获得食物
+                    if (Math.random() < 0.2) {
                         this.player.inventory.food += 1;
                         this.showMessage('获得木材和浆果！');
                     } else {
                         this.showMessage('获得木材！');
                     }
-                    return;
+                    collected = true;
                 }
                 
-                // 采集石头
-                const nearbyStone = this.world.stones.find(stone => {
-                    const dx = stone.x - this.player.x;
-                    const dy = stone.y - this.player.y;
-                    return Math.sqrt(dx*dx + dy*dy) < collectDistance;
+                // 采集石头（修复卡顿问题）
+                if (!collected) {
+                    const nearbyStone = this.findNearbyResource(this.world.stones, collectDistance);
+                    if (nearbyStone) {
+                        this.world.stones = this.world.stones.filter(stone => stone !== nearbyStone);
+                        this.player.inventory.stone += 1;
+                        this.showMessage('获得石头！');
+                        collected = true;
+                    }
+                }
+                
+                // 采集浆果丛
+                if (!collected) {
+                    const nearbyBerry = this.findNearbyResource(this.world.berries, collectDistance);
+                    if (nearbyBerry) {
+                        this.world.berries = this.world.berries.filter(berry => berry !== nearbyBerry);
+                        this.player.inventory.food += 2;
+                        this.showMessage('获得浆果！');
+                        collected = true;
+                    }
+                }
+                
+                if (!collected) {
+                    this.showMessage('附近没有可采集的资源！');
+                }
+            }
+            
+            findNearbyResource(resources, distance) {
+                return resources.find(resource => {
+                    const dx = resource.x - this.player.x;
+                    const dy = resource.y - this.player.y;
+                    return Math.sqrt(dx*dx + dy*dy) < distance;
                 });
-                
-                if (nearbyStone) {
-                    this.world.stones = this.world.stones.filter(stone => stone !== nearbyStone);
-                    this.player.inventory.stone += 1;
-                    this.showMessage('获得石头！');
-                }
-                
-                // 采集浆果丛（新增食物来源）
-                const nearbyBerry = this.world.berries.find(berry => {
-                    const dx = berry.x - this.player.x;
-                    const dy = berry.y - this.player.y;
-                    return Math.sqrt(dx*dx + dy*dy) < collectDistance;
-                });
-                
-                if (nearbyBerry) {
-                    this.world.berries = this.world.berries.filter(berry => berry !== nearbyBerry);
-                    this.player.inventory.food += 2;
-                    this.showMessage('获得浆果！');
-                }
             }
             
             eatFood() {
                 if (this.player.inventory.food > 0) {
                     this.player.inventory.food--;
-                    this.player.hunger = Math.min(100, this.player.hunger + 30);
-                    this.player.health = Math.min(100, this.player.health + 10);
+                    this.player.hunger = Math.min(100, this.player.hunger + 40);
+                    this.player.health = Math.min(100, this.player.health + 15);
                     this.showMessage('进食恢复！');
                 } else {
                     this.showMessage('没有食物！');
@@ -364,10 +564,11 @@
                     this.world.campfires.push({
                         x: this.player.x,
                         y: this.player.y,
-                        lightRadius: 100
+                        lightRadius: 150,
+                        flicker: 0
                     });
                     
-                    this.showMessage('建造了篝火！');
+                    this.showMessage('建造了篝火！夜晚可以提供温暖和光明');
                 } else {
                     this.showMessage('需要3木材和2石头！');
                 }
@@ -382,101 +583,185 @@
                         y: this.player.y
                     });
                     
-                    this.showMessage('建造了工作台！');
+                    this.showMessage('建造了工作台！可以制作更好的工具');
                 } else {
                     this.showMessage('需要5木材！');
                 }
             }
             
             showMessage(text) {
-                // 简单的消息显示（可以扩展为更复杂的UI）
-                console.log('游戏消息:', text);
+                const messageDisplay = document.getElementById('message-display');
+                messageDisplay.textContent = text;
+                messageDisplay.style.opacity = '1';
+                
+                if (this.messageTimeout) clearTimeout(this.messageTimeout);
+                this.messageTimeout = setTimeout(() => {
+                    messageDisplay.style.opacity = '0';
+                }, 2000);
             }
             
             updateUI() {
-                document.getElementById('hunger-value').textContent = Math.round(this.player.hunger);
-                document.getElementById('health-value').textContent = Math.round(this.player.health);
-                document.getElementById('sanity-value').textContent = Math.round(this.player.sanity);
-                document.getElementById('day-count').textContent = this.world.dayCount;
-                document.getElementById('time-of-day').textContent = this.world.timeOfDay === 'day' ? '白天' : '夜晚';
+                document.getElementById('hunger-bar').style.width = this.player.hunger + '%';
+                document.getElementById('health-bar').style.width = this.player.health + '%';
+                document.getElementById('sanity-bar').style.width = this.player.sanity + '%';
                 document.getElementById('wood-count').textContent = this.player.inventory.wood;
                 document.getElementById('stone-count').textContent = this.player.inventory.stone;
                 document.getElementById('food-count').textContent = this.player.inventory.food;
-                
-                // 根据时间调整天气显示
-                document.getElementById('weather').textContent = 
-                    this.world.timeOfDay === 'night' ? '星空' : '晴天';
+                document.getElementById('day-count').textContent = this.world.dayCount;
+                document.getElementById('time-of-day').textContent = this.world.timeOfDay === 'day' ? '白天' : '夜晚';
+                document.getElementById('weather').textContent = this.world.timeOfDay === 'night' ? '星空' : '晴天';
             }
             
             render() {
                 // 清空画布
                 if (this.world.timeOfDay === 'day') {
-                    this.ctx.fillStyle = '#87CEEB'; // 天蓝色白天背景
+                    this.ctx.fillStyle = '#87CEEB';
                 } else {
-                    this.ctx.fillStyle = '#191970'; // 深蓝色夜晚背景
+                    this.ctx.fillStyle = '#191970';
                 }
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 
-                // 绘制草地
-                this.ctx.fillStyle = this.world.timeOfDay === 'day' ? '#7CFC00' : '#006400';
-                this.ctx.fillRect(0, 400, this.canvas.width, 200);
+                // 绘制草地背景
+                this.renderGrass();
                 
-                // 绘制树木
-                this.world.trees.forEach(tree => {
-                    this.ctx.fillStyle = '#228B22'; // 绿色树干
-                    this.ctx.fillRect(tree.x - 10, tree.y - 30, 20, 40);
-                    this.ctx.fillStyle = '#32CD32'; // 浅绿色树冠
-                    this.ctx.beginPath();
-                    this.ctx.arc(tree.x, tree.y - 40, 25, 0, Math.PI * 2);
-                    this.ctx.fill();
-                });
+                // 绘制树木（更好的建模）
+                this.renderTrees();
                 
                 // 绘制石头
-                this.world.stones.forEach(stone => {
-                    this.ctx.fillStyle = '#696969'; // 灰色石头
-                    this.ctx.beginPath();
-                    this.ctx.arc(stone.x, stone.y, 15, 0, Math.PI * 2);
-                    this.ctx.fill();
-                });
+                this.renderStones();
+                
+                // 绘制浆果丛
+                this.renderBerries();
                 
                 // 绘制篝火
-                this.world.campfires.forEach(fire => {
-                    // 火光效果
-                    this.ctx.fillStyle = 'rgba(255, 100, 0, 0.3)';
+                this.renderCampfires();
+                
+                // 绘制工作台
+                this.renderWorkbenches();
+                
+                // 绘制玩家
+                this.renderPlayer();
+            }
+            
+            renderGrass() {
+                this.ctx.fillStyle = this.world.timeOfDay === 'day' ? '#7CFC00' : '#006400';
+                this.world.grasses.forEach(grass => {
+                    this.ctx.fillRect(grass.x, grass.y, grass.size, grass.size);
+                });
+            }
+            
+            renderTrees() {
+                this.world.trees.forEach(tree => {
+                    // 树干
+                    this.ctx.fillStyle = '#8B4513';
+                    this.ctx.fillRect(tree.x - 8, tree.y - tree.size/2, 16, tree.size);
+                    
+                    // 树冠
+                    this.ctx.fillStyle = '#228B22';
                     this.ctx.beginPath();
-                    this.ctx.arc(fire.x, fire.y, fire.lightRadius, 0, Math.PI * 2);
+                    this.ctx.arc(tree.x, tree.y - tree.size/2, tree.size/2, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+            }
+            
+            renderStones() {
+                this.world.stones.forEach(stone => {
+                    this.ctx.fillStyle = '#696969';
+                    this.ctx.beginPath();
+                    this.ctx.arc(stone.x, stone.y, stone.size/2, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // 石头纹理
+                    this.ctx.strokeStyle = '#555555';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.arc(stone.x, stone.y, stone.size/3, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                });
+            }
+            
+            renderBerries() {
+                this.world.berries.forEach(berry => {
+                    // 浆果丛
+                    this.ctx.fillStyle = '#32CD32';
+                    this.ctx.beginPath();
+                    this.ctx.arc(berry.x, berry.y, berry.size/2, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // 浆果
+                    this.ctx.fillStyle = '#FF0000';
+                    this.ctx.beginPath();
+                    this.ctx.arc(berry.x, berry.y, berry.size/4, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+            }
+            
+            renderCampfires() {
+                this.world.campfires.forEach(fire => {
+                    fire.flicker += 0.1;
+                    const flickerAmount = Math.sin(fire.flicker) * 10;
+                    
+                    // 火光效果
+                    const gradient = this.ctx.createRadialGradient(
+                        fire.x, fire.y, 0,
+                        fire.x, fire.y, fire.lightRadius + flickerAmount
+                    );
+                    gradient.addColorStop(0, 'rgba(255, 100, 0, 0.8)');
+                    gradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
+                    
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(fire.x, fire.y, fire.lightRadius + flickerAmount, 0, Math.PI * 2);
                     this.ctx.fill();
                     
                     // 篝火本体
                     this.ctx.fillStyle = '#FF4500';
-                    this.ctx.fillRect(fire.x - 8, fire.y - 8, 16, 16);
+                    this.ctx.fillRect(fire.x - 10, fire.y - 10, 20, 20);
                 });
-                
-                // 绘制工作台
+            }
+            
+            renderWorkbenches() {
                 this.world.workbenches.forEach(bench => {
-                    this.ctx.fillStyle = '#8B4513'; // 棕色工作台
-                    this.ctx.fillRect(bench.x - 15, bench.y - 10, 30, 20);
+                    this.ctx.fillStyle = '#8B4513';
+                    this.ctx.fillRect(bench.x - 20, bench.y - 15, 40, 30);
+                    
+                    // 工作台纹理
+                    this.ctx.strokeStyle = '#654321';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(bench.x - 20, bench.y - 15, 40, 30);
                 });
-                
-                // 绘制玩家
-                this.ctx.fillStyle = '#FF6B6B'; // 粉色玩家身体
-                this.ctx.fillRect(this.player.x - 15, this.player.y - 25, 30, 50);
+            }
+            
+            renderPlayer() {
+                // 玩家身体
+                this.ctx.fillStyle = '#FF6B6B';
+                this.ctx.fillRect(this.player.x - this.player.width/2, this.player.y - this.player.height/2, this.player.width, this.player.height);
                 
                 // 玩家头部
-                this.ctx.fillStyle = '#FFB6C1'; // 浅粉色头部
+                this.ctx.fillStyle = '#FFB6C1';
                 this.ctx.beginPath();
-                this.ctx.arc(this.player.x, this.player.y - 35, 12, 0, Math.PI * 2);
+                this.ctx.arc(this.player.x, this.player.y - this.player.height/2 - 10, 12, 0, Math.PI * 2);
                 this.ctx.fill();
                 
-                // 玩家状态条
+                // 根据方向绘制面部特征
+                this.ctx.fillStyle = '#000000';
+                if (this.player.direction === 'left') {
+                    this.ctx.fillRect(this.player.x - 15, this.player.y - this.player.height/2 - 12, 4, 4);
+                } else if (this.player.direction === 'right') {
+                    this.ctx.fillRect(this.player.x + 11, this.player.y - this.player.height/2 - 12, 4, 4);
+                } else {
+                    this.ctx.fillRect(this.player.x - 2, this.player.y - this.player.height/2 - 12, 4, 4);
+                }
+                
+                // 状态条
                 this.renderPlayerBars();
             }
             
             renderPlayerBars() {
-                const barWidth = 60;
-                const barHeight = 6;
-                const startX = this.player.x - 30;
-                const startY = this.player.y - 50;
+                const barWidth = 80;
+                const barHeight = 8;
+                const startX = this.player.x - barWidth/2;
+                const startY = this.player.y - this.player.height/2 - 30;
                 
                 // 饥饿条
                 this.ctx.fillStyle = '#FFA500';
@@ -486,13 +771,23 @@
                 
                 // 生命条
                 this.ctx.fillStyle = '#FF0000';
-                this.ctx.fillRect(startX, startY + 10, barWidth * (this.player.health / 100), barHeight);
-                this.ctx.strokeRect(startX, startY + 10, barWidth, barHeight);
+                this.ctx.fillRect(startX, startY + 12, barWidth * (this.player.health / 100), barHeight);
+                this.ctx.strokeRect(startX, startY + 12, barWidth, barHeight);
                 
                 // 精神条
                 this.ctx.fillStyle = '#9370DB';
-                this.ctx.fillRect(startX, startY + 20, barWidth * (this.player.sanity / 100), barHeight);
-                this.ctx.strokeRect(startX, startY + 20, barWidth, barHeight);
+                this.ctx.fillRect(startX, startY + 24, barWidth * (this.player.sanity / 100), barHeight);
+                this.ctx.strokeRect(startX, startY + 24, barWidth, barHeight);
+            }
+            
+            gameOver() {
+                this.gameState = 'gameover';
+                this.showMessage(`游戏结束！你生存了${this.world.dayCount}天`);
+                setTimeout(() => {
+                    if (confirm(`游戏结束！你生存了${this.world.dayCount}天。重新开始？`)) {
+                        location.reload();
+                    }
+                }, 1000);
             }
             
             gameLoop(timestamp) {
@@ -504,7 +799,7 @@
         
         // 启动游戏
         window.addEventListener('load', () => {
-            new SurvivalGame();
+            new AdvancedSurvivalGame();
         });
     </script>
 </body>

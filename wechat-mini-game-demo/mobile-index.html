@@ -174,18 +174,18 @@
             cursor: pointer;
         }
         
-        /* 消息提示 */
+        /* 消息框 */
         #message-box {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(0, 0, 0, 0.8);
-            padding: 15px 25px;
-            border-radius: 10px;
             color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
             font-size: 16px;
-            z-index: 150;
+            z-index: 300;
             display: none;
         }
         
@@ -200,7 +200,7 @@
 </head>
 <body>
     <div id="game-container">
-        <canvas id="game-canvas"></canvas>
+        <canvas id="game-canvas" width="800" height="600"></canvas>
         
         <!-- HUD界面 -->
         <div id="game-hud">
@@ -222,25 +222,15 @@
                     <div class="stat-fill sanity-fill" id="sanity-bar" style="width: 100%"></div>
                 </div>
             </div>
-            <div class="stat-bar">
-                <span class="stat-label">木材:</span>
-                <span id="wood-count">0</span>
-            </div>
-            <div class="stat-bar">
-                <span class="stat-label">石头:</span>
-                <span id="stone-count">0</span>
-            </div>
-            <div class="stat-bar">
-                <span class="stat-label">食物:</span>
-                <span id="food-count">0</span>
-            </div>
         </div>
         
         <!-- 游戏信息 -->
         <div id="game-info">
             <div>第 <span id="day-count">1</span> 天</div>
             <div id="time-of-day">白天</div>
-            <div id="weather">晴天</div>
+            <div>木材: <span id="wood-count">0</span></div>
+            <div>石头: <span id="stone-count">0</span></div>
+            <div>食物: <span id="food-count">0</span></div>
         </div>
         
         <!-- 手机操作控件 -->
@@ -261,28 +251,30 @@
             <button id="start-btn">开始游戏</button>
         </div>
         
-        <!-- 消息提示框 -->
+        <!-- 消息框 -->
         <div id="message-box"></div>
     </div>
 
     <script>
-        // 手机版游戏逻辑
+        // 饥荒风格生存游戏 - 手机版
         class MobileSurvivalGame {
             constructor() {
                 this.canvas = document.getElementById('game-canvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.gameState = 'menu';
                 
+                // 玩家状态
                 this.player = {
-                    x: 200,
+                    x: 400,
                     y: 300,
+                    speed: 3,
                     hunger: 100,
                     health: 100,
                     sanity: 100,
-                    speed: 3,
                     inventory: { wood: 0, stone: 0, food: 0 }
                 };
                 
+                // 游戏世界
                 this.world = {
                     dayCount: 1,
                     timeOfDay: 'day',
@@ -293,17 +285,16 @@
                     workbenches: []
                 };
                 
+                // 触摸控制
                 this.touchControls = {
                     up: false,
                     down: false,
                     left: false,
-                    right: false,
-                    action: false
+                    right: false
                 };
                 
                 this.dayNightCycle = 0;
                 this.lastUpdateTime = 0;
-                
                 this.init();
             }
             
@@ -366,30 +357,30 @@
             
             generateWorld() {
                 // 生成树木
-                for (let i = 0; i < 10; i++) {
+                for (let i = 0; i < 25; i++) {
                     this.world.trees.push({
                         x: Math.random() * (this.canvas.width - 100) + 50,
-                        y: Math.random() * (this.canvas.height - 200) + 100,
+                        y: Math.random() * (this.canvas.height - 200) + 50,
                         type: 'tree',
                         size: 40
                     });
                 }
                 
                 // 生成石头
-                for (let i = 0; i < 8; i++) {
+                for (let i = 0; i < 20; i++) {
                     this.world.stones.push({
                         x: Math.random() * (this.canvas.width - 100) + 50,
-                        y: Math.random() * (this.canvas.height - 200) + 100,
+                        y: Math.random() * (this.canvas.height - 200) + 50,
                         type: 'stone',
                         size: 30
                     });
                 }
                 
-                // 生成浆果丛（食物来源）
-                for (let i = 0; i < 6; i++) {
+                // 生成浆果丛
+                for (let i = 0; i < 15; i++) {
                     this.world.berries.push({
                         x: Math.random() * (this.canvas.width - 100) + 50,
-                        y: Math.random() * (this.canvas.height - 200) + 100,
+                        y: Math.random() * (this.canvas.height - 200) + 50,
                         type: 'berry',
                         size: 25,
                         hasBerries: true
@@ -502,7 +493,6 @@
                 // 更新游戏信息
                 document.getElementById('day-count').textContent = this.world.dayCount;
                 document.getElementById('time-of-day').textContent = this.world.timeOfDay === 'day' ? '白天' : '夜晚';
-                document.getElementById('weather').textContent = this.world.timeOfDay === 'day' ? '晴天' : '星空';
             }
             
             render() {
