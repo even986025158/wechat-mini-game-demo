@@ -11,12 +11,18 @@
             background: #1a1a1a;
             font-family: Arial, sans-serif;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
         
         #game-container {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            width: 800px;
+            height: 600px;
+            border: 2px solid #444;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
         
         #game-canvas {
@@ -39,6 +45,9 @@
             left: 20px;
             color: white;
             font-size: 12px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
         }
         
         .stat-bar {
@@ -58,11 +67,57 @@
             border-radius: 5px;
             margin-top: 10px;
         }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        
+        #start-screen h1 {
+            color: #ff9900;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        
+        #start-btn {
+            padding: 15px 30px;
+            background: #ff9900;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        #start-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        #resource-display {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <canvas id="game-canvas"></canvas>
+        <canvas id="game-canvas" width="800" height="600"></canvas>
         
         <div id="ui-overlay">
             <div class="stat-bar hunger-bar">饥饿: <span id="hunger-value">100</span></div>
@@ -76,20 +131,362 @@
             </div>
         </div>
         
+        <div id="resource-display">
+            <div>木材: <span id="wood-count">0</span></div>
+            <div>石头: <span id="stone-count">0</span></div>
+            <div>食物: <span id="food-count">0</span></div>
+        </div>
+        
         <div id="controls">
-            <div>控制说明:</div>
+            <div><strong>控制说明:</strong></div>
             <div>WASD - 移动角色</div>
             <div>空格 - 采集资源</div>
             <div>E - 建造篝火</div>
             <div>R - 建造工作台</div>
             <div>F - 进食</div>
         </div>
+        
+        <div id="start-screen">
+            <h1>🌲 生存冒险 🌲</h1>
+            <p style="color: #ccc; margin-bottom: 30px;">收集资源 • 建造家园 • 生存下去</p>
+            <button id="start-btn">开始游戏</button>
+        </div>
     </div>
 
-    <script src="utils.js"></script>
-    <script src="player.js"></script>
-    <script src="world.js"></script>
-    <script src="storage.js"></script>
-    <script src="game.js"></script>
+    <script>
+        // 完整的游戏逻辑
+        class SurvivalGame {
+            constructor() {
+                this.canvas = document.getElementById('game-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.gameState = 'menu';
+                
+                this.player = {
+                    x: 400,
+                    y: 300,
+                    width: 30,
+                    height: 50,
+                    hunger: 100,
+                    health: 100,
+                    sanity: 100,
+                    speed: 4,
+                    inventory: { wood: 0, stone: 0, food: 0 }
+                };
+                
+                this.world = {
+                    dayCount: 1,
+                    timeOfDay: 'day',
+                    trees: [],
+                    stones: [],
+                    campfires: [],
+                    workbenches: []
+                };
+                
+                this.keys = {};
+                this.lastUpdateTime = 0;
+                this.dayNightCycle = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.generateWorld();
+                this.gameLoop();
+            }
+            
+            setupEventListeners() {
+                // 键盘控制
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.key.toLowerCase()] = true;
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.key.toLowerCase()] = false;
+                });
+                
+                // 开始游戏按钮
+                document.getElementById('start-btn').addEventListener('click', () => {
+                    this.startGame();
+                });
+            }
+            
+            startGame() {
+                this.gameState = 'playing';
+                document.getElementById('start-screen').style.display = 'none';
+                this.lastUpdateTime = performance.now();
+            }
+            
+            generateWorld() {
+                // 生成树木
+                for (let i = 0; i < 20; i++) {
+                    this.world.trees.push({
+                        x: Math.random() * 700 + 50,
+                        y: Math.random() * 500 + 50,
+                        type: 'tree',
+                        size: 40
+                    });
+                }
+                
+                // 生成石头
+                for (let i = 0; i < 15; i++) {
+                    this.world.stones.push({
+                        x: Math.random() * 700 + 50,
+                        y: Math.random() * 500 + 50,
+                        type: 'stone',
+                        size: 30
+                    });
+                }
+            }
+            
+            update(timestamp) {
+                if (this.gameState !== 'playing') return;
+                
+                const deltaTime = (timestamp - this.lastUpdateTime) / 1000;
+                this.lastUpdateTime = timestamp;
+                
+                // 移动控制
+                if (this.keys['w'] || this.keys['arrowup']) this.player.y -= this.player.speed;
+                if (this.keys['s'] || this.keys['arrowdown']) this.player.y += this.player.speed;
+                if (this.keys['a'] || this.keys['arrowleft']) this.player.x -= this.player.speed;
+                if (this.keys['d'] || this.keys['arrowright']) this.player.x += this.player.speed;
+                
+                // 边界检查
+                this.player.x = Math.max(0, Math.min(770, this.player.x));
+                this.player.y = Math.max(0, Math.min(550, this.player.y));
+                
+                // 状态更新
+                this.player.hunger = Math.max(0, this.player.hunger - deltaTime * 2);
+                if (this.player.hunger < 30) {
+                    this.player.health = Math.max(0, this.player.health - deltaTime * 1);
+                }
+                
+                // 昼夜循环
+                this.dayNightCycle += deltaTime;
+                if (this.dayNightCycle > 60) { // 60秒一个周期
+                    this.dayNightCycle = 0;
+                    this.world.timeOfDay = this.world.timeOfDay === 'day' ? 'night' : 'day';
+                    if (this.world.timeOfDay === 'day') {
+                        this.world.dayCount++;
+                    }
+                }
+                
+                // 行动控制
+                if (this.keys[' ']) { // 空格键采集
+                    this.collectResources();
+                    this.keys[' '] = false; // 防止连续触发
+                }
+                
+                if (this.keys['f']) { // F键进食
+                    this.eatFood();
+                    this.keys['f'] = false;
+                }
+                
+                if (this.keys['e']) { // E键建造篝火
+                    this.buildCampfire();
+                    this.keys['e'] = false;
+                }
+                
+                if (this.keys['r']) { // R键建造工作台
+                    this.buildWorkbench();
+                    this.keys['r'] = false;
+                }
+                
+                this.updateUI();
+            }
+            
+            collectResources() {
+                const collectDistance = 60;
+                
+                // 采集树木
+                const nearbyTree = this.world.trees.find(tree => {
+                    const dx = tree.x - this.player.x;
+                    const dy = tree.y - this.player.y;
+                    return Math.sqrt(dx*dx + dy*dy) < collectDistance;
+                });
+                
+                if (nearbyTree) {
+                    this.world.trees = this.world.trees.filter(tree => tree !== nearbyTree);
+                    this.player.inventory.wood += 2;
+                    this.showMessage('获得木材！');
+                    return;
+                }
+                
+                // 采集石头
+                const nearbyStone = this.world.stones.find(stone => {
+                    const dx = stone.x - this.player.x;
+                    const dy = stone.y - this.player.y;
+                    return Math.sqrt(dx*dx + dy*dy) < collectDistance;
+                });
+                
+                if (nearbyStone) {
+                    this.world.stones = this.world.stones.filter(stone => stone !== nearbyStone);
+                    this.player.inventory.stone += 1;
+                    this.showMessage('获得石头！');
+                }
+            }
+            
+            eatFood() {
+                if (this.player.inventory.food > 0) {
+                    this.player.inventory.food--;
+                    this.player.hunger = Math.min(100, this.player.hunger + 30);
+                    this.player.health = Math.min(100, this.player.health + 10);
+                    this.showMessage('进食恢复！');
+                } else {
+                    this.showMessage('没有食物！');
+                }
+            }
+            
+            buildCampfire() {
+                if (this.player.inventory.wood >= 3 && this.player.inventory.stone >= 2) {
+                    this.player.inventory.wood -= 3;
+                    this.player.inventory.stone -= 2;
+                    
+                    this.world.campfires.push({
+                        x: this.player.x,
+                        y: this.player.y,
+                        lightRadius: 100
+                    });
+                    
+                    this.showMessage('建造了篝火！');
+                } else {
+                    this.showMessage('需要3木材和2石头！');
+                }
+            }
+            
+            buildWorkbench() {
+                if (this.player.inventory.wood >= 5) {
+                    this.player.inventory.wood -= 5;
+                    
+                    this.world.workbenches.push({
+                        x: this.player.x,
+                        y: this.player.y
+                    });
+                    
+                    this.showMessage('建造了工作台！');
+                } else {
+                    this.showMessage('需要5木材！');
+                }
+            }
+            
+            showMessage(text) {
+                // 简单的消息显示（可以扩展为更复杂的UI）
+                console.log('游戏消息:', text);
+            }
+            
+            updateUI() {
+                document.getElementById('hunger-value').textContent = Math.round(this.player.hunger);
+                document.getElementById('health-value').textContent = Math.round(this.player.health);
+                document.getElementById('sanity-value').textContent = Math.round(this.player.sanity);
+                document.getElementById('day-count').textContent = this.world.dayCount;
+                document.getElementById('time-of-day').textContent = this.world.timeOfDay === 'day' ? '白天' : '夜晚';
+                document.getElementById('wood-count').textContent = this.player.inventory.wood;
+                document.getElementById('stone-count').textContent = this.player.inventory.stone;
+                document.getElementById('food-count').textContent = this.player.inventory.food;
+                
+                // 根据时间调整天气显示
+                document.getElementById('weather').textContent = 
+                    this.world.timeOfDay === 'night' ? '星空' : '晴天';
+            }
+            
+            render() {
+                // 清空画布
+                if (this.world.timeOfDay === 'day') {
+                    this.ctx.fillStyle = '#87CEEB'; // 天蓝色白天背景
+                } else {
+                    this.ctx.fillStyle = '#191970'; // 深蓝色夜晚背景
+                }
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // 绘制草地
+                this.ctx.fillStyle = this.world.timeOfDay === 'day' ? '#7CFC00' : '#006400';
+                this.ctx.fillRect(0, 400, this.canvas.width, 200);
+                
+                // 绘制树木
+                this.world.trees.forEach(tree => {
+                    this.ctx.fillStyle = '#228B22'; // 绿色树干
+                    this.ctx.fillRect(tree.x - 10, tree.y - 30, 20, 40);
+                    this.ctx.fillStyle = '#32CD32'; // 浅绿色树冠
+                    this.ctx.beginPath();
+                    this.ctx.arc(tree.x, tree.y - 40, 25, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                
+                // 绘制石头
+                this.world.stones.forEach(stone => {
+                    this.ctx.fillStyle = '#696969'; // 灰色石头
+                    this.ctx.beginPath();
+                    this.ctx.arc(stone.x, stone.y, 15, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                
+                // 绘制篝火
+                this.world.campfires.forEach(fire => {
+                    // 火光效果
+                    this.ctx.fillStyle = 'rgba(255, 100, 0, 0.3)';
+                    this.ctx.beginPath();
+                    this.ctx.arc(fire.x, fire.y, fire.lightRadius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // 篝火本体
+                    this.ctx.fillStyle = '#FF4500';
+                    this.ctx.fillRect(fire.x - 8, fire.y - 8, 16, 16);
+                });
+                
+                // 绘制工作台
+                this.world.workbenches.forEach(bench => {
+                    this.ctx.fillStyle = '#8B4513'; // 棕色工作台
+                    this.ctx.fillRect(bench.x - 15, bench.y - 10, 30, 20);
+                });
+                
+                // 绘制玩家
+                this.ctx.fillStyle = '#FF6B6B'; // 粉色玩家身体
+                this.ctx.fillRect(this.player.x - 15, this.player.y - 25, 30, 50);
+                
+                // 玩家头部
+                this.ctx.fillStyle = '#FFB6C1'; // 浅粉色头部
+                this.ctx.beginPath();
+                this.ctx.arc(this.player.x, this.player.y - 35, 12, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // 玩家状态条
+                this.renderPlayerBars();
+            }
+            
+            renderPlayerBars() {
+                const barWidth = 60;
+                const barHeight = 6;
+                const startX = this.player.x - 30;
+                const startY = this.player.y - 50;
+                
+                // 饥饿条
+                this.ctx.fillStyle = '#FFA500';
+                this.ctx.fillRect(startX, startY, barWidth * (this.player.hunger / 100), barHeight);
+                this.ctx.strokeStyle = '#000';
+                this.ctx.strokeRect(startX, startY, barWidth, barHeight);
+                
+                // 生命条
+                this.ctx.fillStyle = '#FF0000';
+                this.ctx.fillRect(startX, startY + 10, barWidth * (this.player.health / 100), barHeight);
+                this.ctx.strokeRect(startX, startY + 10, barWidth, barHeight);
+                
+                // 精神条
+                this.ctx.fillStyle = '#9370DB';
+                this.ctx.fillRect(startX, startY + 20, barWidth * (this.player.sanity / 100), barHeight);
+                this.ctx.strokeRect(startX, startY + 20, barWidth, barHeight);
+            }
+            
+            gameLoop(timestamp) {
+                this.update(timestamp);
+                this.render();
+                requestAnimationFrame((t) => this.gameLoop(t));
+            }
+        }
+        
+        // 启动游戏
+        window.addEventListener('load', () => {
+            new SurvivalGame();
+        });
+    </script>
 </body>
 </html>

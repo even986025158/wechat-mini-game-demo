@@ -48,7 +48,7 @@
             padding: 0 20px;
             z-index: 100;
         }
-        
+
         .control-pad {
             width: 120px;
             height: 120px;
@@ -237,12 +237,12 @@
     </div>
 
     <script>
-        // 游戏主逻辑
-        class SurvivalGame {
+        // 游戏主逻辑 - 手机版
+        class MobileSurvivalGame {
             constructor() {
                 this.canvas = document.getElementById('game-canvas');
                 this.ctx = this.canvas.getContext('2d');
-                this.gameState = 'menu'; // menu, playing, paused
+                this.gameState = 'menu';
                 
                 // 玩家状态
                 this.player = {
@@ -258,14 +258,13 @@
                 // 游戏世界
                 this.world = {
                     dayCount: 1,
-                    timeOfDay: 'day', // day, night
+                    timeOfDay: 'day',
                     resources: [],
                     trees: [],
                     stones: []
                 };
                 
-                // 控制状态
-                this.keys = {};
+                // 触摸控制状态
                 this.touchControls = {
                     up: false,
                     down: false,
@@ -415,7 +414,7 @@
             }
             
             showMessage(text) {
-                // 简单的消息显示（可以扩展为更复杂的UI）
+                // 简单的消息显示
                 console.log('游戏消息:', text);
             }
             
@@ -473,7 +472,7 @@
         
         // 启动游戏
         window.addEventListener('load', () => {
-            new SurvivalGame();
+            new MobileSurvivalGame();
         });
     </script>
 </body>
