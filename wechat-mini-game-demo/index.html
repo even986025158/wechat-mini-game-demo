@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>饥荒风格生存游戏 Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a1a;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #game-canvas {
+            display: block;
+            background: #2d2d2d;
+        }
+        
+        #ui-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 14px;
+            pointer-events: none;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .stat-bar {
+            margin: 5px 0;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 3px;
+        }
+        
+        .hunger-bar { color: #ff6b35; }
+        .health-bar { color: #4CAF50; }
+        .sanity-bar { color: #9C27B0; }
+        
+        .time-display {
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        
+        <div id="ui-overlay">
+            <div class="stat-bar hunger-bar">饥饿: <span id="hunger-value">100</span></div>
+            <div class="stat-bar health-bar">生命: <span id="health-value">100</span></div>
+            <div class="stat-bar sanity-bar">精神: <span id="sanity-value">100</span></div>
+            
+            <div class="time-display">
+                <div>天数: <span id="day-count">1</span></div>
+                <div>时间: <span id="time-of-day">白天</span></div>
+                <div>天气: <span id="weather">晴天</span></div>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <div>控制说明:</div>
+            <div>WASD - 移动角色</div>
+            <div>空格 - 采集资源</div>
+            <div>E - 建造篝火</div>
+            <div>R - 建造工作台</div>
+            <div>F - 进食</div>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script src="player.js"></script>
+    <script src="world.js"></script>
+    <script src="storage.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

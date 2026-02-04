@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>饥荒风格生存小游戏 - 手机版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #1a1a2e;
+            color: white;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #2d2d44;
+        }
+        
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        
+        /* 手机操作界面 */
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+        }
+        
+        .control-pad {
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            position: relative;
+        }
+        
+        .direction-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .up { top: 10px; left: 50%; transform: translateX(-50%); }
+        .down { bottom: 10px; left: 50%; transform: translateX(-50%); }
+        .left { top: 50%; left: 10px; transform: translateY(-50%); }
+        .right { top: 50%; right: 10px; transform: translateY(-50%); }
+        
+        .action-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 100, 100, 0.8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        /* HUD界面 */
+        #game-hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        
+        .stat-bar {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .stat-label {
+            width: 60px;
+            font-weight: bold;
+        }
+        
+        .stat-value {
+            flex: 1;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .stat-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+        
+        .hunger-fill { background: #ff9900; }
+        .health-fill { background: #ff4444; }
+        .sanity-fill { background: #8844ff; }
+        
+        /* 游戏信息 */
+        #game-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            text-align: right;
+        }
+        
+        /* 开始界面 */
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        #start-screen h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #ff9900;
+        }
+        
+        #start-btn {
+            padding: 15px 30px;
+            background: #ff9900;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 480px) {
+            .control-pad { width: 100px; height: 100px; }
+            .direction-btn { width: 35px; height: 35px; font-size: 16px; }
+            .action-btn { width: 70px; height: 70px; font-size: 12px; }
+            #game-hud, #game-info { font-size: 10px; padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        
+        <!-- HUD界面 -->
+        <div id="game-hud">
+            <div class="stat-bar">
+                <span class="stat-label">饥饿:</span>
+                <div class="stat-value">
+                    <div class="stat-fill hunger-fill" id="hunger-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="stat-bar">
+                <span class="stat-label">生命:</span>
+                <div class="stat-value">
+                    <div class="stat-fill health-fill" id="health-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="stat-bar">
+                <span class="stat-label">精神:</span>
+                <div class="stat-value">
+                    <div class="stat-fill sanity-fill" id="sanity-bar" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 游戏信息 -->
+        <div id="game-info">
+            <div>第 <span id="day-count">1</span> 天</div>
+            <div id="time-of-day">白天</div>
+            <div>资源: <span id="resource-count">0</span></div>
+        </div>
+        
+        <!-- 手机操作控件 -->
+        <div id="mobile-controls">
+            <div class="control-pad">
+                <div class="direction-btn up">↑</div>
+                <div class="direction-btn down">↓</div>
+                <div class="direction-btn left">←</div>
+                <div class="direction-btn right">→</div>
+            </div>
+            <div class="action-btn" id="action-btn">行动</div>
+        </div>
+        
+        <!-- 开始界面 -->
+        <div id="start-screen">
+            <h1>🌲 生存冒险 🌲</h1>
+            <p>收集资源 • 建造家园 • 生存下去</p>
+            <button id="start-btn">开始游戏</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏主逻辑
+        class SurvivalGame {
+            constructor() {
+                this.canvas = document.getElementById('game-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.gameState = 'menu'; // menu, playing, paused
+                
+                // 玩家状态
+                this.player = {
+                    x: 400,
+                    y: 300,
+                    speed: 3,
+                    hunger: 100,
+                    health: 100,
+                    sanity: 100,
+                    inventory: []
+                };
+                
+                // 游戏世界
+                this.world = {
+                    dayCount: 1,
+                    timeOfDay: 'day', // day, night
+                    resources: [],
+                    trees: [],
+                    stones: []
+                };
+                
+                // 控制状态
+                this.keys = {};
+                this.touchControls = {
+                    up: false,
+                    down: false,
+                    left: false,
+                    right: false
+                };
+                
+                this.init();
+            }
+            
+            init() {
+                this.resizeCanvas();
+                this.setupEventListeners();
+                this.generateWorld();
+                this.gameLoop();
+            }
+            
+            resizeCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+            
+            setupEventListeners() {
+                // 窗口大小变化
+                window.addEventListener('resize', () => this.resizeCanvas());
+                
+                // 开始游戏按钮
+                document.getElementById('start-btn').addEventListener('click', () => {
+                    this.startGame();
+                });
+                
+                // 触摸控制
+                this.setupTouchControls();
+            }
+            
+            setupTouchControls() {
+                const controlPad = document.querySelector('.control-pad');
+                const actionBtn = document.getElementById('action-btn');
+                
+                // 方向控制
+                ['up', 'down', 'left', 'right'].forEach(direction => {
+                    const btn = document.querySelector(`.${direction}`);
+                    
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.touchControls[direction] = true;
+                    });
+                    
+                    btn.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        this.touchControls[direction] = false;
+                    });
+                });
+                
+                // 行动按钮
+                actionBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.performAction();
+                });
+            }
+            
+            startGame() {
+                this.gameState = 'playing';
+                document.getElementById('start-screen').style.display = 'none';
+                this.loadGameState();
+            }
+            
+            generateWorld() {
+                // 生成树木
+                for (let i = 0; i < 10; i++) {
+                    this.world.trees.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        type: 'tree'
+                    });
+                }
+                
+                // 生成石头
+                for (let i = 0; i < 5; i++) {
+                    this.world.stones.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        type: 'stone'
+                    });
+                }
+            }
+            
+            updatePlayer() {
+                // 移动控制
+                if (this.touchControls.up) this.player.y -= this.player.speed;
+                if (this.touchControls.down) this.player.y += this.player.speed;
+                if (this.touchControls.left) this.player.x -= this.player.speed;
+                if (this.touchControls.right) this.player.x += this.player.speed;
+                
+                // 边界检查
+                this.player.x = Math.max(0, Math.min(this.canvas.width, this.player.x));
+                this.player.y = Math.max(0, Math.min(this.canvas.height, this.player.y));
+                
+                // 状态更新
+                this.player.hunger = Math.max(0, this.player.hunger - 0.01);
+                if (this.player.hunger < 30) {
+                    this.player.health = Math.max(0, this.player.health - 0.02);
+                }
+                
+                // 更新UI
+                this.updateUI();
+            }
+            
+            performAction() {
+                // 检查附近的资源
+                const nearbyTree = this.findNearbyResource(this.world.trees, 50);
+                const nearbyStone = this.findNearbyResource(this.world.stones, 50);
+                
+                if (nearbyTree) {
+                    // 砍树
+                    this.world.trees = this.world.trees.filter(tree => tree !== nearbyTree);
+                    this.player.inventory.push('wood');
+                    this.showMessage('获得木材！');
+                } else if (nearbyStone) {
+                    // 挖矿
+                    this.world.stones = this.world.stones.filter(stone => stone !== nearbyStone);
+                    this.player.inventory.push('stone');
+                    this.showMessage('获得石头！');
+                }
+                
+                this.updateUI();
+            }
+            
+            findNearbyResource(resources, distance) {
+                return resources.find(resource => {
+                    const dx = resource.x - this.player.x;
+                    const dy = resource.y - this.player.y;
+                    return Math.sqrt(dx * dx + dy * dy) < distance;
+                });
+            }
+            
+            updateUI() {
+                // 更新状态条
+                document.getElementById('hunger-bar').style.width = this.player.hunger + '%';
+                document.getElementById('health-bar').style.width = this.player.health + '%';
+                document.getElementById('sanity-bar').style.width = this.player.sanity + '%';
+                
+                // 更新游戏信息
+                document.getElementById('day-count').textContent = this.world.dayCount;
+                document.getElementById('time-of-day').textContent = this.world.timeOfDay === 'day' ? '白天' : '夜晚';
+                document.getElementById('resource-count').textContent = this.player.inventory.length;
+            }
+            
+            showMessage(text) {
+                // 简单的消息显示（可以扩展为更复杂的UI）
+                console.log('游戏消息:', text);
+            }
+            
+            render() {
+                // 清空画布
+                this.ctx.fillStyle = this.world.timeOfDay === 'day' ? '#87CEEB' : '#191970';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // 绘制树木
+                this.world.trees.forEach(tree => {
+                    this.ctx.fillStyle = '#228B22';
+                    this.ctx.fillRect(tree.x - 10, tree.y - 20, 20, 40);
+                });
+                
+                // 绘制石头
+                this.world.stones.forEach(stone => {
+                    this.ctx.fillStyle = '#696969';
+                    this.ctx.fillRect(stone.x - 8, stone.y - 8, 16, 16);
+                });
+                
+                // 绘制玩家
+                this.ctx.fillStyle = '#FF6B6B';
+                this.ctx.fillRect(this.player.x - 10, this.player.y - 10, 20, 20);
+            }
+            
+            saveGameState() {
+                const gameData = {
+                    player: this.player,
+                    world: this.world,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('survivalGame', JSON.stringify(gameData));
+            }
+            
+            loadGameState() {
+                const saved = localStorage.getItem('survivalGame');
+                if (saved) {
+                    const gameData = JSON.parse(saved);
+                    this.player = gameData.player;
+                    this.world = gameData.world;
+                    this.showMessage('游戏进度已加载！');
+                }
+            }
+            
+            gameLoop() {
+                if (this.gameState === 'playing') {
+                    this.updatePlayer();
+                    this.render();
+                    this.saveGameState();
+                }
+                
+                requestAnimationFrame(() => this.gameLoop());
+            }
+        }
+        
+        // 启动游戏
+        window.addEventListener('load', () => {
+            new SurvivalGame();
+        });
+    </script>
+</body>
+</html>

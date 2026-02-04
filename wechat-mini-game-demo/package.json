@@ -1,0 +1,18 @@
+{
+  "name": "hunger-survival-mini-game",
+  "version": "1.0.0",
+  "description": "饥荒风格的微信小游戏Demo",
+  "main": "mobile-index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "build": "echo 'No build process needed for static files'",
+    "deploy": "echo 'Deploy to GitHub Pages or Netlify'"
+  },
+  "keywords": ["wechat", "mini-game", "survival", "hunger-game"],
+  "author": "OpenClaw AI Assistant",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/hunger-survival-game"
+  }
+}
