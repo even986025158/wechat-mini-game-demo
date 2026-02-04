@@ -1,0 +1,33 @@
+# GitHub Pages Configuration
+baseurl: "/wechat-mini-game-demo"
+title: "饥荒风格生存小游戏"
+description: "基于微信小游戏框架的生存冒险游戏"
+
+# Build settings
+markdown: kramdown
+plugins:
+  - jekyll-sitemap
+
+# Exclude from processing
+# The following items will not be processed, by default.
+# Any item listed under the `exclude:` key here will be automatically added to
+# the internal "default list".
+#
+# Excluded items can be processed by explicitly listing the directories or
+# their entries' file path in the `include:` list.
+#
+exclude:
+  - .git
+  - .github
+  - node_modules
+  - README.md
+  - package.json
+  - .gitignore
+  - DEPLOYMENT*.md
+
+# Include specific files
+include:
+  - "*.html"
+  - "*.css"
+  - "*.js"
+  - "*.json"

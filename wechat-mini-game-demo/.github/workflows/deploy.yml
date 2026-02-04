@@ -2,12 +2,12 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -18,13 +18,40 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Create deployment package
+      run: |
+        # 创建部署目录
+        mkdir -p dist
+        
+        # 复制游戏文件到部署目录
+        cp mobile-index.html dist/index.html
+        cp mobile-style.css dist/style.css
+        cp game.js dist/
+        cp game.json dist/
+        cp player.js dist/
+        cp world.js dist/
+        cp storage.js dist/
+        cp utils.js dist/
+        
+        # 创建 CNAME 文件（可选，用于自定义域名）
+        echo "wechat-mini-game-demo.pages.dev" > dist/CNAME
+        
+        # 创建 404 页面
+        echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=index.html"></head></html>' > dist/404.html
+    
     - name: Setup Pages
       uses: actions/configure-pages@v4
     
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: '.'
+        path: './dist'
     
     - name: Deploy to GitHub Pages
       id: deployment

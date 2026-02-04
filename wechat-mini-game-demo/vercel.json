@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "name": "hunger-survival-mini-game",
+  "builds": [
+    {
+      "src": "mobile-index.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/mobile-index.html"
+    }
+  ],
+  "outputDirectory": "."
+}
