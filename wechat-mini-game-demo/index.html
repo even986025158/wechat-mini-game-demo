@@ -308,7 +308,13 @@
                 if (nearbyTree) {
                     this.world.trees = this.world.trees.filter(tree => tree !== nearbyTree);
                     this.player.inventory.wood += 2;
-                    this.showMessage('获得木材！');
+                    // 砍树时有几率获得食物（浆果）
+                    if (Math.random() < 0.3) {
+                        this.player.inventory.food += 1;
+                        this.showMessage('获得木材和浆果！');
+                    } else {
+                        this.showMessage('获得木材！');
+                    }
                     return;
                 }
                 
@@ -323,6 +329,19 @@
                     this.world.stones = this.world.stones.filter(stone => stone !== nearbyStone);
                     this.player.inventory.stone += 1;
                     this.showMessage('获得石头！');
+                }
+                
+                // 采集浆果丛（新增食物来源）
+                const nearbyBerry = this.world.berries.find(berry => {
+                    const dx = berry.x - this.player.x;
+                    const dy = berry.y - this.player.y;
+                    return Math.sqrt(dx*dx + dy*dy) < collectDistance;
+                });
+                
+                if (nearbyBerry) {
+                    this.world.berries = this.world.berries.filter(berry => berry !== nearbyBerry);
+                    this.player.inventory.food += 2;
+                    this.showMessage('获得浆果！');
                 }
             }
             
